@@ -203,7 +203,7 @@ public class frmMain : Form
 
     private void bgWorker_DoWork(object sender, DoWorkEventArgs e)
     {
-        int batchSize = 200;
+        int batchSize = 500;
         var table = gPLX_TWDataSet.Tables["GPLX"];
 
         for (int i = 0; i < table.Rows.Count; i++)
@@ -262,11 +262,35 @@ public class frmMain : Form
                     {
                         tableAdapterManager.UpdateAll(gPLX_TWDataSet);
                     }
-                    catch 
+                    catch (DBConcurrencyException dbEx)
                     {
+                        // Lấy ra DataTable đang lỗi
+                        var errorTable = gPLX_TWDataSet.Tables["GPLX"].GetChanges();
+
+                        if (errorTable != null && errorTable.Rows.Count > 0)
+                        {
+                            foreach (DataRow errRow in errorTable.Rows)
+                            {
+                                try
+                                {
+                                    // thử update riêng từng row
+                                    gPLXTableAdapter.Update(new DataRow[] { errRow });
+                                    errRow.AcceptChanges();
+                                }
+                                catch (Exception innerEx)
+                                {
+                                    errRow.RowError = innerEx.Message;
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Lỗi cập nhật batch: {ex.Message}");
                     }
                 }
             }
+
         }
 
         // update nốt phần dư
@@ -276,8 +300,31 @@ public class frmMain : Form
             {
                 tableAdapterManager.UpdateAll(gPLX_TWDataSet);
             }
-            catch 
+            catch (DBConcurrencyException dbEx)
             {
+                // Lấy ra DataTable đang lỗi
+                var errorTable = gPLX_TWDataSet.Tables["GPLX"].GetChanges();
+
+                if (errorTable != null && errorTable.Rows.Count > 0)
+                {
+                    foreach (DataRow errRow in errorTable.Rows)
+                    {
+                        try
+                        {
+                            // thử update riêng từng row
+                            gPLXTableAdapter.Update(new DataRow[] { errRow });
+                            errRow.AcceptChanges();
+                        }
+                        catch (Exception innerEx)
+                        {
+                            errRow.RowError = innerEx.Message;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi cập nhật batch: {ex.Message}");
             }
         }
     }
