@@ -286,7 +286,24 @@ public class frmMain : Form
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"Lỗi cập nhật batch: {ex.Message}");
+                        var errorTable = gPLX_TWDataSet.Tables["GPLX"].GetChanges();
+
+                        if (errorTable != null && errorTable.Rows.Count > 0)
+                        {
+                            foreach (DataRow errRow in errorTable.Rows)
+                            {
+                                try
+                                {
+                                    // thử update riêng từng row
+                                    gPLXTableAdapter.Update(new DataRow[] { errRow });
+                                    errRow.AcceptChanges();
+                                }
+                                catch (Exception innerEx)
+                                {
+                                    errRow.RowError = innerEx.Message;
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -324,7 +341,24 @@ public class frmMain : Form
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi cập nhật batch: {ex.Message}");
+                var errorTable = gPLX_TWDataSet.Tables["GPLX"].GetChanges();
+
+                if (errorTable != null && errorTable.Rows.Count > 0)
+                {
+                    foreach (DataRow errRow in errorTable.Rows)
+                    {
+                        try
+                        {
+                            // thử update riêng từng row
+                            gPLXTableAdapter.Update(new DataRow[] { errRow });
+                            errRow.AcceptChanges();
+                        }
+                        catch (Exception innerEx)
+                        {
+                            errRow.RowError = innerEx.Message;
+                        }
+                    }
+                }
             }
         }
     }
